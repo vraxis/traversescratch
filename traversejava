@@ -1,0 +1,93 @@
+package obwalk;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.beanutils.BeanMap;
+import org.apache.commons.beanutils.PropertyUtilsBean;
+import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.iterators.ObjectGraphIterator;
+
+public class walkit {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+	
+		SomeChildDto
+			child1 = new SomeChildDto("1920","pat");
+		SomeParentDto
+			parent = new SomeParentDto();
+		parent.children = child1;
+	
+		
+		SomeChildDto
+			child2 = new SomeChildDto("1943","pat");
+		SomeParentDto
+			parent2 = new SomeParentDto();
+		parent2.children = child2;
+
+		
+		
+		List<SomeParentDto>
+		 parenList = new ArrayList<>();
+		parenList.add(parent);
+		parenList.add(parent2);
+				
+		ObjectGraphIterator
+			itr = null; 
+		if(Iterable.class.isAssignableFrom(parenList.getClass())){
+			itr = new ObjectGraphIterator(((Iterable)parenList).iterator());		
+		} else {
+			itr = new ObjectGraphIterator(parenList,null);
+		}
+			
+		
+		while (itr.hasNext()) {
+			Object o = itr.next();
+			cleanObject(o,"children.dob");
+		}
+		
+		itr = new ObjectGraphIterator(parent2,null);
+		while (itr.hasNext()) {
+			Object o = itr.next();
+			cleanObject(o,"children.dob");
+		}
+	}
+	
+	public static void cleanObject(Object randomObject, String cleanPath) {
+		
+		BeanMap objectMap = new BeanMap(randomObject);
+		PropertyUtilsBean propUtils = new PropertyUtilsBean();
+		List<String> 
+				propertiesPath = Arrays.asList(cleanPath.split("[.]"));		
+		int
+			currIndex = 0;
+		Object currPathObject = randomObject;
+		
+		for(currIndex = 0; currIndex < propertiesPath.size()-1;++currIndex) {
+			try {
+				currPathObject = propUtils.getSimpleProperty(currPathObject,propertiesPath.get(currIndex));	
+				//check if its iterable and if so iterate and clean each object with this method from current remaining path
+				
+			} catch (IllegalAccessException |InvocationTargetException |NoSuchMethodException e) {
+				e.printStackTrace();
+				return; //object path given was wrong or doesnt apply to object in mixed bag
+			} 
+			if(currPathObject == null) {
+				return; // object in path is null so no need to clean
+			}
+		}
+		//current object is one that shoudl have property
+		try {
+		currPathObject = propUtils.getSimpleProperty(currPathObject,propertiesPath.get(currIndex));
+		System.err.println(currPathObject);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return;
+		}
+				
+	} 
+	
+}
